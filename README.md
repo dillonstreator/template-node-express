@@ -10,7 +10,7 @@ A minimal production-ready node HTTP server with [`express`](https://expressjs.c
 ✅ API testing with [`supertest`](https://github.com/ladjs/supertest) \
 ✅ [`helmet`](https://github.com/helmetjs/helmet) & [`compression`](https://github.com/expressjs/compression)
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/FdfQPz?referralCode=ToZEjF)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/yDjb7F?referralCode=ToZEjF)
 
 ## Installation
 
