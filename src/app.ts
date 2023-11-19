@@ -1,10 +1,12 @@
-
-import express from 'express';
-import { RequestListener } from 'http';
-import { Config } from './config';
+import { randomUUID } from 'node:crypto';
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { RequestListener } from 'node:http';
+import express, { json, urlencoded } from 'express';
 import pino from 'pino';
-import { randomUUID } from 'crypto';
-import { AsyncLocalStorage } from 'async_hooks';
+import helmet from 'helmet';
+import compression from 'compression';
+import { getClientIp } from 'request-ip';
+import { Config } from './config';
 
 export type App = {
     requestListener: RequestListener,
@@ -13,11 +15,10 @@ export type App = {
 
 export const initApp = async (config: Config, logger: pino.Logger): Promise<App> => {
     const app = express();
-    app.set("trust proxy", 1);
-
+    app.set("trust proxy", true);
     app.use((req, res, next) => {
         const start = new Date().getTime();
-        
+
         const requestId = req.headers['x-request-id']?.[0] || randomUUID();
 
         const l = logger.child({ requestId });
@@ -29,12 +30,16 @@ export const initApp = async (config: Config, logger: pino.Logger): Promise<App>
                 path: req.path,
                 status: res.statusCode,
                 ua: req.headers['user-agent'],
-                ip: req.ip,
+                ip: getClientIp(req),
             }, "Request handled");
         });
 
         asl.run({ logger: l, requestId }, () => next());
     });
+    app.use(helmet());
+    app.use(compression());
+    app.use(urlencoded());
+    app.use(json());
 
     app.get(config.healthCheckEndpoint, (req, res) => {
         res.sendStatus(200);
@@ -57,7 +62,6 @@ export const initApp = async (config: Config, logger: pino.Logger): Promise<App>
 type Store = {
     logger: pino.Logger;
     requestId: string;
-    // traceId: string;
 }
 
 const asl = new AsyncLocalStorage<Store>();

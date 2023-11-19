@@ -1,7 +1,7 @@
-import { otlpShutdown } from "./telemetry";
-import { createServer } from "http";
-import { initApp } from "./app";
+import { createServer } from "node:http";
 import gracefulShutdown from "http-graceful-shutdown";
+import { otlpShutdown } from "./telemetry";
+import { initApp } from "./app";
 import { Env, initConfig } from "./config";
 import { initLogging } from "./logging";
 

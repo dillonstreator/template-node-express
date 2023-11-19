@@ -1,8 +1,8 @@
 
+import pino from 'pino';
 import request from 'supertest';
 import { App, initApp } from './app';
 import { Config, initConfig } from './config';
-import pino from 'pino';
 
 describe("app", () => {
     let app: App;
