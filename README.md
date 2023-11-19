@@ -14,14 +14,14 @@ A minimal production-ready node HTTP server with [`express`](https://expressjs.c
 
 ## Installation
 
-Go 1.20+ required
-
 ```sh
 git clone https://github.com/dillonstreator/template-node-express
 
 cd template-node-express
 
-go run .
+yarn install
+
+yarn dev
 ```
 
 ## Configuration
