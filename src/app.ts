@@ -23,6 +23,28 @@ export const initApp = async (config: Config, logger: pino.Logger): Promise<App>
 
         const l = logger.child({ requestId });
 
+        let bytesRead = 0;
+        req.on('data', (chunk: Buffer) => {
+            bytesRead += chunk.length;
+        });
+
+        let bytesWritten = 0;
+        const oldWrite = res.write;
+        const oldEnd = res.end;
+        res.write = function (chunk: Buffer | string, ...rest) {
+            if (chunk) bytesWritten += chunk.length;
+
+            // @ts-ignore
+            return oldWrite.apply(res, [chunk, ...rest]);
+        };
+        // @ts-ignore
+        res.end = function (chunk?: Buffer | string, ...rest) {
+            if (chunk) bytesWritten += chunk.length;
+
+            // @ts-ignore
+            return oldEnd.apply(res, [chunk, ...rest]);
+        };
+
         res.on("finish", () => {
             l.info({
                 duration: new Date().getTime() - start,
@@ -31,6 +53,8 @@ export const initApp = async (config: Config, logger: pino.Logger): Promise<App>
                 status: res.statusCode,
                 ua: req.headers['user-agent'],
                 ip: getClientIp(req),
+                br: bytesRead,
+                bw: bytesWritten,
             }, "Request handled");
         });
 
