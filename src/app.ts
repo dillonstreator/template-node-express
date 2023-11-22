@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { RequestListener } from 'node:http';
-import express, { json, urlencoded } from 'express';
+import express, { NextFunction, Request, Response, json, urlencoded } from 'express';
 import pino from 'pino';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -73,6 +73,15 @@ export const initApp = async (config: Config, logger: pino.Logger): Promise<App>
         const s = asl.getStore();
         s?.logger.info("hi");
         res.send("hi");
+    });
+
+    app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+        asl.getStore()?.logger.error(err);
+
+        if (res.headersSent) return next(err);
+
+        res.status(500);
+        res.json({ msg: "Something went wrong" });
     });
 
     return {
