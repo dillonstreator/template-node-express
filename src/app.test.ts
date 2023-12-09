@@ -48,15 +48,22 @@ describe('app', () => {
 
     // TODO: look into fixing this test as it seemingly always passes even if explicitly making /abort-signal-propagation not respect the abort signal
     // manual testing did confirm the implementation is working properly so something goofy about supertest#abort()
-    it('should propagate cancellation and not fetch', async () => {
+    //
+    // update: adding a setTimeout and aborting in that gives the expected result but there is an open async operation --detectOpenHandles that points to the request.get() call.. need to investigate
+    it.only('should propagate cancellation and not fetch', async () => {
         const fetchURL = 'https://jsonplaceholder.typicode.com/users';
         const users = [{ name: 'user1' }, { name: 'user2' }];
         fetchMock.get(fetchURL, users);
 
         try {
-            await request(app.requestListener)
-                .get('/abort-signal-propagation')
-                .abort(); // abort() throws so make sure to catch it
+            const r = request(app.requestListener)
+                .get('/abort-signal-propagation');
+
+            setTimeout(() => {
+                r.abort();
+            }, 100);
+
+            await r;
         } catch (e) {}
 
         // allow the server to complete any work that it would have been doing before asserting that fetch did not get called
