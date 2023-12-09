@@ -137,7 +137,7 @@ export const initApp = async (
     app.get('/abort-signal-propagation', async (req, res) => {
         for (let i = 0; i < 10; i++) {
             // simulate some work
-            await new Promise((r) => setTimeout(r, 50));
+            await new Promise((r) => setTimeout(r, 25));
 
             if (req.abortSignal.aborted) throw new Error('aborted');
         }
