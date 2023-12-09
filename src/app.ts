@@ -1,21 +1,50 @@
 import { randomUUID } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { RequestListener } from 'node:http';
-import express, { NextFunction, Request, Response, json, urlencoded } from 'express';
+import express, {
+    NextFunction,
+    Request,
+    RequestHandler,
+    Response,
+} from 'express';
 import pino from 'pino';
 import helmet from 'helmet';
 import compression from 'compression';
 import { getClientIp } from 'request-ip';
 import { Config } from './config';
+import ev from 'express-validator';
 
 export type App = {
-    requestListener: RequestListener,
-    shutdown: () => Promise<void>,
-}
+    requestListener: RequestListener;
+    shutdown: () => Promise<void>;
+};
 
-export const initApp = async (config: Config, logger: pino.Logger): Promise<App> => {
+const LARGE_JSON_PATH = '/large-json-payload';
+const APPLICATION_JSON = 'application/json';
+
+export const initApp = async (
+    config: Config,
+    logger: pino.Logger
+): Promise<App> => {
     const app = express();
-    app.set("trust proxy", true);
+    app.set('trust proxy', true);
+    app.use(
+        express.raw({
+            limit: '1kb',
+            type: (req) => req.headers['content-type'] !== APPLICATION_JSON,
+        })
+    );
+    app.use(
+        express.json({
+            limit: '50kb',
+            type: (req) => {
+                return (
+                    req.headers['content-type'] === APPLICATION_JSON &&
+                    req.url !== LARGE_JSON_PATH
+                );
+            },
+        })
+    );
     app.use((req, res, next) => {
         const start = new Date().getTime();
 
@@ -45,43 +74,61 @@ export const initApp = async (config: Config, logger: pino.Logger): Promise<App>
             return oldEnd.apply(res, [chunk, ...rest]);
         };
 
-        res.on("finish", () => {
-            l.info({
-                duration: new Date().getTime() - start,
-                method: req.method,
-                path: req.path,
-                status: res.statusCode,
-                ua: req.headers['user-agent'],
-                ip: getClientIp(req),
-                br: bytesRead,
-                bw: bytesWritten,
-            }, "Request handled");
+        res.on('finish', () => {
+            l.info(
+                {
+                    duration: new Date().getTime() - start,
+                    method: req.method,
+                    path: req.path,
+                    status: res.statusCode,
+                    ua: req.headers['user-agent'],
+                    ip: getClientIp(req),
+                    br: bytesRead,
+                    bw: bytesWritten,
+                },
+                'Request handled'
+            );
         });
 
         asl.run({ logger: l, requestId }, () => next());
     });
     app.use(helmet());
     app.use(compression());
-    app.use(urlencoded());
-    app.use(json());
 
     app.get(config.healthCheckEndpoint, (req, res) => {
         res.sendStatus(200);
     });
 
-    app.get("/hi", (req, res) => {
+    app.get('/hi', (req, res) => {
         const s = asl.getStore();
-        s?.logger.info("hi");
-        res.send("hi");
+        s?.logger.info('hi');
+        res.send('hi');
     });
+
+    app.post(
+        '/echo',
+        makeValidationMiddleware([ev.body('name').notEmpty()]),
+        (req, res) => {
+            res.json({ msg: `hi ${req.body.name}` });
+        }
+    );
+
+    app.post(
+        LARGE_JSON_PATH,
+        express.json({ limit: '5mb', type: APPLICATION_JSON }),
+        (req, res) => {
+            // TODO: handle large json payload
+            res.end();
+        }
+    );
 
     app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
         asl.getStore()?.logger.error(err);
 
-        if (res.headersSent) return next(err);
+        if (res.headersSent) return;
 
         res.status(500);
-        res.json({ msg: "Something went wrong" });
+        res.json({ msg: 'Something went wrong' });
     });
 
     return {
@@ -89,12 +136,30 @@ export const initApp = async (config: Config, logger: pino.Logger): Promise<App>
         shutdown: async () => {
             // add any cleanup code here including database/redis disconnecting and background job shutdown
         },
-    }
-}
+    };
+};
 
 type Store = {
     logger: pino.Logger;
     requestId: string;
-}
+};
 
 const asl = new AsyncLocalStorage<Store>();
+
+export function makeValidationMiddleware(
+    runners: ev.ContextRunner[]
+): RequestHandler {
+    return async function (req: Request, res: Response, next: NextFunction) {
+        await Promise.all(runners.map((runner) => runner.run(req)));
+
+        const errors = ev.validationResult(req);
+        if (!errors.isEmpty()) {
+            res.status(400).json({
+                errors: errors.array(),
+            });
+            return;
+        }
+
+        next();
+    };
+}
