@@ -58,7 +58,9 @@ describe('app', () => {
         } catch (e) {}
 
         // allow the server to complete any work that it would have been doing before asserting that fetch did not get called
-        // this 500ms timeout is brittle as it's directly tied to the simulated work in the endpoint 10 iterations of 25ms
+        // to see the effects of this test, you could remove the request handlers use of `req.abortSignal`
+        //
+        // this 500ms timeout is brittle as it's intended to be larger than the simulated work in the endpoint (10 iterations of 25ms)
         // given this is just for demonstration purposed, it's fine
         await new Promise((r) => setTimeout(r, 500));
 
