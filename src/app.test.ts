@@ -50,7 +50,7 @@ describe('app', () => {
     // manual testing did confirm the implementation is working properly so something goofy about supertest#abort()
     //
     // update: adding a setTimeout and aborting in that gives the expected result but there is an open async operation --detectOpenHandles that points to the request.get() call.. need to investigate
-    it.only('should propagate cancellation and not fetch', async () => {
+    it('should propagate cancellation and not fetch', async () => {
         const fetchURL = 'https://jsonplaceholder.typicode.com/users';
         const users = [{ name: 'user1' }, { name: 'user2' }];
         fetchMock.get(fetchURL, users);
