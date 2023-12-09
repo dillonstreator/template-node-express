@@ -57,12 +57,8 @@ export const initApp = async (
     app.use((req, res, next) => {
         const start = new Date().getTime();
         const ac = new AbortController();
-        req.socket.on('close', (hadError) => {
-            if (hadError && req.destroyed) {
-                ac.abort();
-            }
-        });
         req.abortSignal = ac.signal;
+        res.on('close', ac.abort.bind(ac));
 
         const requestId = req.headers['x-request-id']?.[0] || randomUUID();
 
@@ -141,11 +137,9 @@ export const initApp = async (
     app.get('/abort-signal-propagation', async (req, res) => {
         for (let i = 0; i < 10; i++) {
             // simulate some work
-            await new Promise((r) => setTimeout(r, 10));
-            if (req.abortSignal.aborted) {
-                res.end();
-                return;
-            }
+            await new Promise((r) => setTimeout(r, 50));
+
+            if (req.abortSignal.aborted) throw new Error('aborted');
         }
 
         const usersRes = await fetch(

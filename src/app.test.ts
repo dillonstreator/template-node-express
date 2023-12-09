@@ -46,6 +46,8 @@ describe('app', () => {
         expect(fetchMock.called(fetchURL)).toBe(true);
     });
 
+    // TODO: look into fixing this test as it seemingly always passes even if explicitly making /abort-signal-propagation not respect the abort signal
+    // manual testing did confirm the implementation is working properly so something goofy about supertest#abort()
     it('should propagate cancellation and not fetch', async () => {
         const fetchURL = 'https://jsonplaceholder.typicode.com/users';
         const users = [{ name: 'user1' }, { name: 'user2' }];
