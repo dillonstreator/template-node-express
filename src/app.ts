@@ -7,12 +7,13 @@ import express, {
     RequestHandler,
     Response,
 } from 'express';
+import 'express-async-errors';
 import pino from 'pino';
 import helmet from 'helmet';
 import compression from 'compression';
 import { getClientIp } from 'request-ip';
-import { Config } from './config';
 import * as ev from 'express-validator';
+import { Config } from './config';
 
 export type App = {
     requestListener: RequestListener;
@@ -147,26 +148,19 @@ export const initApp = async (
             }
         }
 
-        fetch('https://jsonplaceholder.typicode.com/users', {
-            signal: req.abortSignal,
-        })
-            .then((usersRes) => {
-                if (usersRes.status !== 200) {
-                    throw new Error(
-                        `unexpected non-200 status code ${usersRes.status}`
-                    );
-                }
-
-                return usersRes.json();
-            })
-            .then((users) => {
-                res.json(users);
-            })
-            .catch((error) => {
-                res.status(500).json({
-                    error,
-                });
-            });
+        const usersRes = await fetch(
+            'https://jsonplaceholder.typicode.com/users',
+            {
+                signal: req.abortSignal,
+            }
+        );
+        if (usersRes.status !== 200) {
+            throw new Error(
+                `unexpected non-200 status code ${usersRes.status}`
+            );
+        }
+        const users = await usersRes.json();
+        res.json(users);
     });
 
     app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
