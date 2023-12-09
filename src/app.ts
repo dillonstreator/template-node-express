@@ -12,12 +12,20 @@ import helmet from 'helmet';
 import compression from 'compression';
 import { getClientIp } from 'request-ip';
 import { Config } from './config';
-import ev from 'express-validator';
+import * as ev from 'express-validator';
 
 export type App = {
     requestListener: RequestListener;
     shutdown: () => Promise<void>;
 };
+
+declare global {
+    namespace Express {
+        interface Request {
+            abortSignal: AbortSignal;
+        }
+    }
+}
 
 const LARGE_JSON_PATH = '/large-json-payload';
 const APPLICATION_JSON = 'application/json';
@@ -47,6 +55,13 @@ export const initApp = async (
     );
     app.use((req, res, next) => {
         const start = new Date().getTime();
+        const ac = new AbortController();
+        req.socket.on('close', (hadError) => {
+            if (hadError && req.destroyed) {
+                ac.abort();
+            }
+        });
+        req.abortSignal = ac.signal;
 
         const requestId = req.headers['x-request-id']?.[0] || randomUUID();
 
@@ -121,6 +136,38 @@ export const initApp = async (
             res.end();
         }
     );
+
+    app.get('/abort-signal-propagation', async (req, res) => {
+        for (let i = 0; i < 10; i++) {
+            // simulate some work
+            await new Promise((r) => setTimeout(r, 10));
+            if (req.abortSignal.aborted) {
+                res.end();
+                return;
+            }
+        }
+
+        fetch('https://jsonplaceholder.typicode.com/users', {
+            signal: req.abortSignal,
+        })
+            .then((usersRes) => {
+                if (usersRes.status !== 200) {
+                    throw new Error(
+                        `unexpected non-200 status code ${usersRes.status}`
+                    );
+                }
+
+                return usersRes.json();
+            })
+            .then((users) => {
+                res.json(users);
+            })
+            .catch((error) => {
+                res.status(500).json({
+                    error,
+                });
+            });
+    });
 
     app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
         asl.getStore()?.logger.error(err);
