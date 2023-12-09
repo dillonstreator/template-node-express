@@ -10,7 +10,7 @@ A minimal production-ready node HTTP server with [`Express`](https://expressjs.c
 ✅ Validation with [`express-validator`](https://express-validator.github.io/docs) \
 ✅ Structured logging with [`pino`](https://github.com/pinojs/pino) \
 ✅ Rich request logging middleware including request id, trace id, context propagation, and more \
-✅ Testing with [`jest`](https://github.com/jestjs/jest) and [`supertest`](https://github.com/ladjs/supertest) \
+✅ Testing with [`jest`](https://github.com/jestjs/jest), [`supertest`](https://github.com/ladjs/supertest), and [`fetch-mock`](https://github.com/wheresrhys/fetch-mock) \
 ✅ [`helmet`](https://github.com/helmetjs/helmet) & [`compression`](https://github.com/expressjs/compression)
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/KwYYFA?referralCode=ToZEjF)
