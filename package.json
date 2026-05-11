@@ -32,7 +32,7 @@
     "@opentelemetry/auto-instrumentations-node": "^0.40.0",
     "@opentelemetry/exporter-trace-otlp-proto": "^0.45.1",
     "@opentelemetry/resources": "^1.18.1",
-    "@opentelemetry/sdk-node": "^0.45.1",
+    "@opentelemetry/sdk-node": "^0.217.0",
     "@opentelemetry/sdk-trace-base": "^1.18.1",
     "@opentelemetry/semantic-conventions": "^1.18.1",
     "compression": "^1.7.4",
