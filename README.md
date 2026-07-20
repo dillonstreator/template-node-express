@@ -14,7 +14,7 @@ A minimal production-ready node HTTP server with [`Express`](https://expressjs.c
 ✅ Testing with [`jest`](https://github.com/jestjs/jest), [`supertest`](https://github.com/forwardemail/supertest), and [`fetch-mock`](https://github.com/wheresrhys/fetch-mock) \
 ✅ [`helmet`](https://github.com/helmetjs/helmet) & [`compression`](https://github.com/expressjs/compression)
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/KwYYFA?referralCode=ToZEjF)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/KwYYFA?referralCode=ToZEjF&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
 ## Installation
 
