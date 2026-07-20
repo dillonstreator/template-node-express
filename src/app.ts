@@ -7,7 +7,6 @@ import express, {
     RequestHandler,
     Response,
 } from 'express';
-import 'express-async-errors';
 import pino from 'pino';
 import helmet from 'helmet';
 import compression from 'compression';
