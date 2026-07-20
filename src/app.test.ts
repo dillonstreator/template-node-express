@@ -1,8 +1,8 @@
 import pino from 'pino';
 import request from 'supertest';
+import fetchMock from 'fetch-mock';
 import { App, initApp } from './app';
 import { Config, initConfig } from './config';
-import fetchMock from 'fetch-mock';
 
 describe('app', () => {
     let app: App;
@@ -13,12 +13,15 @@ describe('app', () => {
             healthCheckEndpoint: '/some-health-check-endpoint',
         };
         app = await initApp(config, pino({ enabled: false }));
+        fetchMock.mockGlobal();
     });
     afterAll(async () => {
+        fetchMock.unmockGlobal();
         await app?.shutdown();
     });
     afterEach(() => {
-        fetchMock.restore();
+        fetchMock.removeRoutes();
+        fetchMock.clearHistory();
     });
 
     it('should return 200 for config health check endpoint', async () => {
@@ -34,7 +37,7 @@ describe('app', () => {
     it('should mock fetch', async () => {
         const fetchURL = 'https://jsonplaceholder.typicode.com/users';
         const users = [{ name: 'user1' }, { name: 'user2' }];
-        fetchMock.get(fetchURL, users);
+        fetchMock.get(fetchURL, users, { name: 'users' });
 
         await request(app.requestListener)
             .get('/abort-signal-propagation')
@@ -43,13 +46,13 @@ describe('app', () => {
                 res.body == users;
             });
 
-        expect(fetchMock.called(fetchURL)).toBe(true);
+        expect(fetchMock.callHistory.called('users')).toBe(true);
     });
 
     it('should propagate cancellation and not fetch', async () => {
         const fetchURL = 'https://jsonplaceholder.typicode.com/users';
         const users = [{ name: 'user1' }, { name: 'user2' }];
-        fetchMock.get(fetchURL, users);
+        fetchMock.get(fetchURL, users, { name: 'users' });
 
         try {
             await request(app.requestListener)
@@ -64,6 +67,6 @@ describe('app', () => {
         // given this is just for demonstration purposed, it's fine
         await new Promise((r) => setTimeout(r, 500));
 
-        expect(fetchMock.called(fetchURL)).toBe(false);
+        expect(fetchMock.callHistory.called('users')).toBe(false);
     });
 });

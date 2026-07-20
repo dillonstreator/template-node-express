@@ -1,29 +1,29 @@
-FROM node as builder
+FROM node:22-bookworm AS builder
 
 WORKDIR /usr/src/app
 
-COPY package.json yarn.lock ./
+RUN corepack enable
 
-RUN yarn install --frozen-lockfile
+COPY package.json pnpm-lock.yaml ./
+
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 
-RUN yarn build
+RUN pnpm build && pnpm prune --prod
 
-FROM node:slim
+FROM node:22-bookworm-slim
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
 USER node
 
 WORKDIR /usr/src/app
 
-COPY package.json yarn.lock ./
+COPY --from=builder --chown=node:node /usr/src/app/package.json ./
+COPY --from=builder --chown=node:node /usr/src/app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /usr/src/app/dist ./dist
 
-RUN yarn install --production --frozen-lockfile
-
-COPY --from=builder /usr/src/app/dist ./dist
-
-ENV PORT 3000
+ENV PORT=3000
 EXPOSE $PORT
 
 CMD [ "node", "dist/index.js" ]

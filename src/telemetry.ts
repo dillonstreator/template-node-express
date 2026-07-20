@@ -2,12 +2,12 @@ import { NodeSDK } from '@opentelemetry/sdk-node';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { ConsoleSpanExporter, SpanExporter } from '@opentelemetry/sdk-trace-base';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
-import { Resource } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { resourceFromAttributes } from '@opentelemetry/resources';
+import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
 
 const telemetryEnabled = process.env.OTEL_ENABLED?.toLowerCase() === "true";
 
-let sdk: NodeSDK;
+let sdk: NodeSDK | undefined;
 
 if (telemetryEnabled) {
     let exporter: SpanExporter;
@@ -20,10 +20,10 @@ if (telemetryEnabled) {
         exporter = new ConsoleSpanExporter();
     }
 
-    const sdk = new NodeSDK({
-        resource: new Resource({
-            [SemanticResourceAttributes.SERVICE_NAME]: process.env.SERVICE_NAME || "node-express",
-            [SemanticResourceAttributes.SERVICE_VERSION]: process.env.SERVICE_VERSION || 'v1.0.0',
+    sdk = new NodeSDK({
+        resource: resourceFromAttributes({
+            [ATTR_SERVICE_NAME]: process.env.SERVICE_NAME || "node-express",
+            [ATTR_SERVICE_VERSION]: process.env.SERVICE_VERSION || 'v1.0.0',
         }),
         traceExporter: exporter,
         instrumentations: [getNodeAutoInstrumentations()],
