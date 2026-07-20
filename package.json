@@ -25,7 +25,7 @@
     "@changesets/cli": "^2.31.1",
     "@jest/globals": "^29.7.0",
     "@types/compression": "^1.8.1",
-    "@types/express": "^4.17.23",
+    "@types/express": "^5.0.6",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.9",
     "@types/request-ip": "^0.0.41",
@@ -47,8 +47,7 @@
     "@opentelemetry/sdk-trace-base": "^2.9.0",
     "@opentelemetry/semantic-conventions": "^1.43.0",
     "compression": "^1.8.1",
-    "express": "^4.22.2",
-    "express-async-errors": "^3.1.1",
+    "express": "^5.2.1",
     "express-validator": "^7.3.2",
     "helmet": "^8.1.0",
     "http-graceful-shutdown": "^3.1.16",
@@ -60,6 +59,7 @@
       "protobufjs"
     ],
     "overrides": {
+      "@types/express": "^5.0.6",
       "js-yaml": "^3.15.0",
       "form-data": "^4.0.6",
       "protobufjs": "^7.6.3",
