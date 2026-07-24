@@ -61,7 +61,7 @@ export const initApp = async (
 
         const requestId = req.headers['x-request-id']?.[0] || randomUUID();
 
-        const l = logger.child({ requestId });
+        const l = logger.child({ req: { id: requestId } });
 
         let bytesRead = 0;
         req.on('data', (chunk: Buffer) => {
@@ -88,14 +88,19 @@ export const initApp = async (
         res.on('finish', () => {
             l.info(
                 {
-                    duration: new Date().getTime() - start,
-                    method: req.method,
-                    path: req.path,
-                    status: res.statusCode,
-                    ua: req.headers['user-agent'],
-                    ip: getClientIp(req),
-                    br: bytesRead,
-                    bw: bytesWritten,
+                    req: {
+                        id: requestId,
+                        method: req.method,
+                        path: req.path,
+                        userAgent: req.headers['user-agent'],
+                        ip: getClientIp(req),
+                        bytesRead,
+                    },
+                    res: {
+                        statusCode: res.statusCode,
+                        bytesWritten,
+                    },
+                    responseTime: new Date().getTime() - start,
                 },
                 'Request handled'
             );
