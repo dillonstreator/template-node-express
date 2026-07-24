@@ -1,5 +1,11 @@
 # template-node-express
 
+## 2.1.0
+
+### Minor Changes
+
+- [#19](https://github.com/osbytes/template-node-express/pull/19) [`0038d5b`](https://github.com/osbytes/template-node-express/commit/0038d5b16fd24d4820d37bcce32b90a2400498ba) Thanks [@dillonstreator](https://github.com/dillonstreator)! - Use clearer nested req/res field names in request logging (aligned with pino-http style).
+
 ## 2.0.0
 
 ### Major Changes
