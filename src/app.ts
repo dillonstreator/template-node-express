@@ -12,13 +12,6 @@ import helmet from 'helmet';
 import compression from 'compression';
 import { getClientIp } from 'request-ip';
 import * as ev from 'express-validator';
-import {
-    ATTR_CLIENT_ADDRESS,
-    ATTR_HTTP_REQUEST_METHOD,
-    ATTR_HTTP_RESPONSE_STATUS_CODE,
-    ATTR_URL_PATH,
-    ATTR_USER_AGENT_ORIGINAL,
-} from '@opentelemetry/semantic-conventions';
 import { Config } from './config';
 
 export type App = {
@@ -36,9 +29,6 @@ declare global {
 
 const LARGE_JSON_PATH = '/large-json-payload';
 const APPLICATION_JSON = 'application/json';
-const HTTP_REQUEST_ID = 'http.request.id';
-const HTTP_REQUEST_BODY_SIZE = 'http.request.body.size';
-const HTTP_RESPONSE_BODY_SIZE = 'http.response.body.size';
 
 export const initApp = async (
     config: Config,
@@ -71,7 +61,7 @@ export const initApp = async (
 
         const requestId = req.headers['x-request-id']?.[0] || randomUUID();
 
-        const l = logger.child({ [HTTP_REQUEST_ID]: requestId });
+        const l = logger.child({ req: { id: requestId } });
 
         let bytesRead = 0;
         req.on('data', (chunk: Buffer) => {
@@ -98,14 +88,19 @@ export const initApp = async (
         res.on('finish', () => {
             l.info(
                 {
-                    duration: new Date().getTime() - start,
-                    [ATTR_HTTP_REQUEST_METHOD]: req.method,
-                    [ATTR_URL_PATH]: req.path,
-                    [ATTR_HTTP_RESPONSE_STATUS_CODE]: res.statusCode,
-                    [ATTR_USER_AGENT_ORIGINAL]: req.headers['user-agent'],
-                    [ATTR_CLIENT_ADDRESS]: getClientIp(req),
-                    [HTTP_REQUEST_BODY_SIZE]: bytesRead,
-                    [HTTP_RESPONSE_BODY_SIZE]: bytesWritten,
+                    req: {
+                        id: requestId,
+                        method: req.method,
+                        path: req.path,
+                        userAgent: req.headers['user-agent'],
+                        ip: getClientIp(req),
+                        bytesRead,
+                    },
+                    res: {
+                        statusCode: res.statusCode,
+                        bytesWritten,
+                    },
+                    responseTime: new Date().getTime() - start,
                 },
                 'Request handled'
             );
